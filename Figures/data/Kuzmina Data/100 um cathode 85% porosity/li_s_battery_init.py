@@ -192,11 +192,11 @@ class cathode():
     W_S_k = elyte_obj.molecular_weights[3:]
     
     m_S_el = inputs.A_cat*eps_el_0*H*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
-    m_S_el_an = inputs.A_cat*(1 - inputs.epsilon_an)*inputs.H_an*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
+    m_S_el_an = inputs.A_cat*inputs.H_an_el*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_el_sep = inputs.A_cat*(1 - inputs.epsilon_sep)*inputs.H_elyte*W_S*np.dot(n_S_atoms, inputs.C_k_el_0)
     m_S_tot_0 = m_S_0 + m_S_el + m_S_el_an + m_S_el_sep 
     
-    V_elyte = inputs.A_cat*(inputs.H_an*(1-inputs.epsilon_an) +
+    V_elyte = inputs.A_cat*(inputs.H_an_el +
                             inputs.H_elyte*(1-inputs.epsilon_sep) +
                             inputs.H_cat*eps_el_0)
     print('Elyte/sulfur ratio ', 1e3*V_elyte/m_S_tot_0)
@@ -241,6 +241,15 @@ class cathode():
         
     A_C_vec = np.array([])
     nucl_thresh = 1e-2
+    
+    if 'lithiated' in inputs.ctifile:
+        print('Using lithiated mechanism')
+        lithiated_flag = 1
+        C_Li_0 = inputs.C_k_el_0[ptr['iFar']] + 2*np.sum(inputs.C_k_el_0[4:])
+    else:
+        lithiated_flag = 0
+        C_Li_0 = inputs.C_k_el_0[ptr['iFar']]
+        
     
 "============================================================================="        
         
@@ -333,7 +342,7 @@ class anode():
     dy = inputs.H_an/npoints
     H = inputs.H_an
     
-    H_el = H*eps_el
+    H_el = inputs.H_an_el
     dy_el = H_el/1
     dyInv_el = 1/H_el
     
@@ -347,8 +356,8 @@ class anode():
     
     n_S_0 = eps_el*H*np.dot(cathode.n_S_atoms, inputs.C_k_el_0)
     
-    m_Li = H*inputs.epsilon_an*lithium_obj.density_mass
-    m_el = H*eps_el*elyte_obj.density_mass
+    m_Li = H*lithium_obj.density_mass
+    m_el = H_el*elyte_obj.density_mass
     m_an = inputs.A_cat*(m_Li + m_el)
     m_bat = cathode.m_cat + sep.m_sep + m_an
     
